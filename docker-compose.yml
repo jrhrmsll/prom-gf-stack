@@ -1,0 +1,39 @@
+version: '3.2'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.37.5
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    user: "1000:1000"
+    volumes:
+      - ./prometheus/etc/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/etc/alerting.rules.yml:/etc/prometheus/alerting.rules.yml
+      - ./prometheus/etc/recording.rules.yml:/etc/prometheus/recording.rules.yml
+      - ./prometheus/data:/prometheus
+
+  pushgateway:
+    image: prom/pushgateway:v1.5.1
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./pushgateway:/pushgateway
+    command:
+      - '--persistence.file=/pushgateway/metrics'
+      - '--persistence.interval=30s'
+
+  grafana:
+    image: grafana/grafana:9.3.1
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=grafana
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+    volumes:
+      - ./grafana/dashboards/:/var/lib/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
